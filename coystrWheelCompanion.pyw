@@ -1,4 +1,4 @@
-# coystrWheel Companion v1.0.2
+# coystrWheel Companion v1.0.3
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
 
@@ -7,6 +7,8 @@
 #         	Bugfix: Corrected an issue where Weight would not update on use of "All Weight+1" in the main window
 # v.1.0.2: Added a confirmation box to the Remove button.
 # 			Bugfix: Corrected an issue where using Remove would display the wrong name.
+# v.1.0.3: Bugfix: Corrected an issue where trying to use Remove on the last remaining item in the list would crash the program.
+#					Corrected an issue found when using Remove on the last remaining item (after the above fix) would not clear input fields.
 
 import PySimpleGUI as sg
 import random
@@ -73,7 +75,7 @@ def main():
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!')
 			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.')
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0', 'coystrWheel Companion Version 1.0.2', "For my good friend, Coy. Hope all your seeds aren't trash!")
+			sg.popup('coystrWheel Version 1.0', 'coystrWheel Companion Version 1.0.3', "For my good friend, Coy. Hope all your seeds aren't trash!")
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari')
 		elif event == 'Add New...':
 			if not window2:
@@ -88,21 +90,29 @@ def main():
 			if elephant == 'Yes':
 				content.pop(selectIndex)
 				choices.pop(selectIndex)
-				values['-selection-'] = values['-selection-'][0]
-				selectIndex = 0
-				window.FindElement('-selection-').update(set_to_index = selectIndex, values=choices)
-				selectList = content[selectIndex].split()
-				var1, var2, var3, var4, var5, var6, var7 = [hex(int(selectList[k])).lstrip("0x").zfill(2) for k in range(7)]
-				var1 = int(var1, 16)
-				var8 = selectList[7]
-				window['-WEIGHT-'].update(var1)
-				window['-R1-'].update(var2), window['-G1-'].update(var3), window['-B1-'].update(var4)
-				window['-R2-'].update(var5), window['-G2-'].update(var6), window['-B2-'].update(var7)
+				if content != []:
+					values['-selection-'] = values['-selection-'][0]
+					selectIndex = 0
+					window.FindElement('-selection-').update(set_to_index = selectIndex, values=choices)
+					selectList = content[selectIndex].split()
+					var1, var2, var3, var4, var5, var6, var7 = [hex(int(selectList[k])).lstrip("0x").zfill(2) for k in range(7)]
+					var1 = int(var1, 16)
+					var8 = selectList[7]
+					window['-WEIGHT-'].update(var1)
+					window['-R1-'].update(var2), window['-G1-'].update(var3), window['-B1-'].update(var4)
+					window['-R2-'].update(var5), window['-G2-'].update(var6), window['-B2-'].update(var7)
+				else:
+					values['-selection-'] = ['']
+					selectIndex = 0
+					window['-selection-'].update('', set_to_index = -1, values=choices)
+					window['-WEIGHT-'].update('')
+					window['-R1-'].update(''), window['-G1-'].update(''), window['-B1-'].update('')
+					window['-R2-'].update(''), window['-G2-'].update(''), window['-B2-'].update('')
 				sg.popup(deletedName + ' removed from the wheel successfully.')
 			else:
 				continue
 			#print(content) # debug purposes only
-		elif event == 'All Weight+1':
+		elif event == 'All Weight+1' and len(choices) > 0:
 			for i in range(len(content)):
 				weightList = content[i].split()
 				weightMod = int(weightList[0], 10) + 1
@@ -229,7 +239,7 @@ def main():
 				output_window = None
 
 		try:
-			if values['-selection-'] and values['-selection-'] != var8:
+			if values['-selection-'] and values['-selection-'] != var8 and values['-selection-'] != ['']:
 				for i, j in enumerate(choices):
 					if j == values['-selection-']:
 						selectIndex = i
