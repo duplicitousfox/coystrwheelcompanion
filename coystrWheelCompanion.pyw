@@ -1,6 +1,10 @@
-# coystrWheel Companion v1.0
+# coystrWheel Companion v1.0.1
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
+
+# v.1.0: Initial Release
+# v.1.0.1: Added a function that shows the text file's users and weights
+#          Bugfix: Corrected an issue where Weight would not update on use of "All Weight+1" in the main window
 
 import PySimpleGUI as sg
 import random
@@ -34,7 +38,7 @@ def main_win():
 	layout = [	[sg.Menu(menu_def)],
 			[sg.Text('Select Piece:          '), sg.Text('BG Color (#RRGGBB)'), sg.Text('Text Color (#RRGGBB)'), sg.Text('Weight')],
 			[sg.Combo(choices, size=(15, 5), key='-selection-', enable_events=True), sg.Text('#'), sg.Input(size=(3, 1), key='-R1-', enable_events=True), sg.Input(size=(3, 1), key='-G1-', enable_events=True), sg.Input(size=(3, 1), key='-B1-', enable_events=True), sg.Text('      #'), sg.Input(size=(3, 1), key='-R2-', enable_events=True), sg.Input(size=(3, 1), key='-G2-', enable_events=True), sg.Input(size=(3, 1), key='-B2-', enable_events=True), sg.Text('  '), sg.Input(size=(3, 1), key='-WEIGHT-', enable_events=True), sg.Button('Apply')],
-			[sg.Button('Add New...'), sg.Button('Remove'), sg.Button('All Weight+1'), sg.Button('Save')]]
+			[sg.Button('Add New...'), sg.Button('Remove'), sg.Button('All Weight+1'), sg.Button('Show List'), sg.Button('Save')]]
 	return sg.Window(title, layout, icon = win_icon, finalize=True)
 
 def addnew_win():
@@ -57,7 +61,7 @@ def main():
 
 		if window == sg.WIN_CLOSED:  #if all windows were closed
 			break
-		if event == sg.WIN_CLOSED or event == 'Cancel':
+		if event == sg.WIN_CLOSED or event == 'Cancel' or event == 'Close':
 			window.close()
 			if window == window2:
 				window2 = None
@@ -67,7 +71,7 @@ def main():
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!')
 			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.')
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0', 'coystrWheel Companion Version 1.0', "For my good friend, Coy. Hope all your seeds aren't trash!")
+			sg.popup('coystrWheel Version 1.0', 'coystrWheel Companion Version 1.0.1', "For my good friend, Coy. Hope all your seeds aren't trash!")
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari')
 		elif event == 'Add New...':
 			if not window2:
@@ -97,8 +101,20 @@ def main():
 				weightMod = int(weightList[0], 10) + 1
 				weightList[0] = str(weightMod)
 				content[i] = separator.join(weightList) + "\n"
+			if values['-selection-']:
+				selectList = content[selectIndex].split()
+				var1 = int(selectList[0])
+				window['-WEIGHT-'].update(var1)
 			sg.popup('All weights increased by +1 successfully.')
 			#print(content) # debug purposes only
+		elif event == 'Show List':
+			sg.PrintClose()
+			sg.Print('Number  Weight  Name')
+			for i, j in enumerate(content):
+				showList = content[i].split()
+				showWeight = showList[0]
+				showName = showList[7]
+				sg.Print(' ' + str(int(i+1)).zfill(3) + '      ' + str(showWeight).zfill(2) + '    ' + showName)
 		elif event == 'Save':
 			file = open('wheeldata.txt','w')
 			file.writelines(content)
