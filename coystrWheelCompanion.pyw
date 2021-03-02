@@ -1,4 +1,4 @@
-# coystrWheel Companion v1.0.3
+# coystrWheel Companion v1.0.4
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
 
@@ -9,6 +9,9 @@
 # 			Bugfix: Corrected an issue where using Remove would display the wrong name.
 # v.1.0.3: Bugfix: Corrected an issue where trying to use Remove on the last remaining item in the list would crash the program.
 #					Corrected an issue found when using Remove on the last remaining item (after the above fix) would not clear input fields.
+# v.1.0.4: Added separate buttons for randomizing Background and Text color values individually.
+#			Changed the default BG and Text colors to black and white in the "Add New..." menu, respectively.
+#			Enabled "." and "'" as valid entries in the "Add New..." menu's Name input box.
 
 import PySimpleGUI as sg
 import random
@@ -47,10 +50,10 @@ def main_win():
 
 def addnew_win():
 	title = "Add New..."
-	layout = [[sg.Text('Name:'), sg.Input(key='-NAMEIN-', enable_events=True)],
-		[sg.Text('BG Color: #'), sg.Input(default_text="ff", size=(3, 1), key='-R1IN-', enable_events=True), sg.Input(default_text="ff", size=(3, 1), key='-G1IN-', enable_events=True), sg.Input(default_text="ff", size=(3, 1), key='-B1IN-', enable_events=True)],
-		[sg.Text('Name Color: #'), sg.Input(default_text="00", size=(3, 1), key='-R2IN-', enable_events=True), sg.Input(default_text="00", size=(3, 1), key='-G2IN-', enable_events=True),sg.Input(default_text="00", size=(3, 1), key='-B2IN-', enable_events=True)],
-		[sg.Checkbox('Subscriber', key='-SUBIN-'), sg.Button('Randomize Colors')],
+	layout = [[sg.Text('Name:'), sg.Input(key='-NAMEIN-', background_color='#000000', text_color='#ffffff', enable_events=True)],
+		[sg.Text('BG Color: #'), sg.Input(default_text="00", size=(3, 1), key='-R1IN-', enable_events=True), sg.Input(default_text="00", size=(3, 1), key='-G1IN-', enable_events=True), sg.Input(default_text="00", size=(3, 1), key='-B1IN-', enable_events=True), sg.Button('Randomize BG Color')],
+		[sg.Text('Name Color: #'), sg.Input(default_text="ff", size=(3, 1), key='-R2IN-', enable_events=True), sg.Input(default_text="ff", size=(3, 1), key='-G2IN-', enable_events=True),sg.Input(default_text="ff", size=(3, 1), key='-B2IN-', enable_events=True), sg.Button('Randomize Text Color')],
+		[sg.Checkbox('Subscriber', key='-SUBIN-'), sg.Button('Randomize Both Colors')],
 		[sg.Button('Add to Wheel'), sg.Button('Cancel')]]
 
 	return sg.Window(title, layout, icon = win_icon, finalize=True)
@@ -75,7 +78,7 @@ def main():
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!')
 			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.')
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0', 'coystrWheel Companion Version 1.0.3', "For my good friend, Coy. Hope all your seeds aren't trash!")
+			sg.popup('coystrWheel Version 1.0.1', 'coystrWheel Companion Version 1.0.4', "For my good friend, Coy. Hope all your seeds aren't trash!")
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari')
 		elif event == 'Add New...':
 			if not window2:
@@ -137,7 +140,7 @@ def main():
 			file.writelines(content)
 			file.close()
 			sg.popup('Your data has been saved.')
-		elif event == '-NAMEIN-' and values['-NAMEIN-'] and values['-NAMEIN-'][-1] not in ('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'):
+		elif event == '-NAMEIN-' and values['-NAMEIN-'] and values['-NAMEIN-'][-1] not in ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'."):
 			window['-NAMEIN-'].update(values['-NAMEIN-'][:-1])
 		elif event == '-NAMEIN-' and len(values['-NAMEIN-']) > 15:
 			window['-NAMEIN-'].update(values['-NAMEIN-'][:-1])
@@ -195,7 +198,21 @@ def main():
 			valRRGGBB1 = "#" + (values['-R1IN-']).zfill(2) + (values['-G1IN-']).zfill(2) + (values['-B1IN-']).zfill(2)
 			valRRGGBB2 = "#" + (values['-R2IN-']).zfill(2) + (values['-G2IN-']).zfill(2) + (values['-B2IN-']).zfill(2)
 			window['-NAMEIN-'].update(text_color = valRRGGBB2, background_color = valRRGGBB1)
-		elif event == 'Randomize Colors':
+		elif event == 'Randomize BG Color':
+			rngR1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			rngG1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			rngB1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			window['-R1IN-'].update(rngR1), window['-G1IN-'].update(rngG1), window['-B1IN-'].update(rngB1)
+			valRRGGBB1 = "#"+str(rngR1)+str(rngG1)+str(rngB1)
+			window['-NAMEIN-'].update(background_color = valRRGGBB1)
+		elif event == 'Randomize Text Color':
+			rngR2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			rngG2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			rngB2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+			window['-R2IN-'].update(rngR2), window['-G2IN-'].update(rngG2), window['-B2IN-'].update(rngB2)
+			valRRGGBB2 = "#"+str(rngR2)+str(rngG2)+str(rngB2)
+			window['-NAMEIN-'].update(text_color = valRRGGBB2)
+		elif event == 'Randomize Both Colors':
 			rngR1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
 			rngG1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
 			rngB1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
