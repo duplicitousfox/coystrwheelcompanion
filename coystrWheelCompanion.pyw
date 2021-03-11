@@ -1,4 +1,4 @@
-# coystrWheel Companion v1.0.4
+# coystrWheel Companion v1.0.5
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
 
@@ -12,6 +12,8 @@
 # v.1.0.4: Added separate buttons for randomizing Background and Text color values individually.
 #			Changed the default BG and Text colors to black and white in the "Add New..." menu, respectively.
 #			Enabled "." and "'" as valid entries in the "Add New..." menu's Name input box.
+# v.1.0.5: Changed where popup windows spawn. It is now based on where the main window is currently located.
+#			Bugfix: Corrected an issue where it was possible to add a piece to the wheel without a name, which crashed the program.
 
 import PySimpleGUI as sg
 import random
@@ -42,7 +44,7 @@ for i in range(selectLength):
 def main_win():
 	menu_def = [['Help', ['Help...', 'About...']], ]
 	title = "coystrWheel Companion"
-	layout = [	[sg.Menu(menu_def)],
+	layout = [[sg.Menu(menu_def)],
 			[sg.Text('Select Piece:          '), sg.Text('BG Color (#RRGGBB)'), sg.Text('Text Color (#RRGGBB)'), sg.Text('Weight')],
 			[sg.Combo(choices, size=(15, 5), key='-selection-', enable_events=True), sg.Text('#'), sg.Input(size=(3, 1), key='-R1-', enable_events=True), sg.Input(size=(3, 1), key='-G1-', enable_events=True), sg.Input(size=(3, 1), key='-B1-', enable_events=True), sg.Text('      #'), sg.Input(size=(3, 1), key='-R2-', enable_events=True), sg.Input(size=(3, 1), key='-G2-', enable_events=True), sg.Input(size=(3, 1), key='-B2-', enable_events=True), sg.Text('  '), sg.Input(size=(3, 1), key='-WEIGHT-', enable_events=True), sg.Button('Apply')],
 			[sg.Button('Add New...'), sg.Button('Remove'), sg.Button('All Weight+1'), sg.Button('Show List'), sg.Button('Save')]]
@@ -66,6 +68,12 @@ def main():
 	while True:  #event Loop
 		window, event, values = sg.read_all_windows()
 
+		locale_tuple = (window1.CurrentLocation()) # Set up where the windows will spawn by finding window1's location
+		locale = list(locale_tuple) # Tuples are immutable. Gotta store it as a list.
+		locale[0] = locale[0] + (window1.Size[0] / 4) # Edit x window coordinate
+		locale[1] = locale[1] + (window1.Size[1] / 2) # Edit y window coordinate
+		sg.SetOptions(window_location = locale) # All future windows will spawn here.
+		
 		if window == sg.WIN_CLOSED:  #if all windows were closed
 			break
 		if event == sg.WIN_CLOSED or event == 'Cancel' or event == 'Close':
@@ -75,25 +83,25 @@ def main():
 			elif window == window1:
 				break
 		elif event == 'Help...':
-			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!')
-			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.')
+			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!', location = locale)
+			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.', location = locale)
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0.1', 'coystrWheel Companion Version 1.0.4', "For my good friend, Coy. Hope all your seeds aren't trash!")
-			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari')
+			sg.popup('coystrWheel Version 1.0.1', 'coystrWheel Companion Version 1.0.5', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
+			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari', location = locale)
 		elif event == 'Add New...':
 			if not window2:
 				window2 = addnew_win()
-		elif event == 'Apply' and values['-selection-']:
+		elif event == 'Apply' and values['-selection-']: # edit the current piece
 			content[selectIndex] = str(int(values['-WEIGHT-'], 10)) + " " + str(int(values['-R1-'], 16)) + " " + str(int(values['-G1-'], 16)) + " " + str(int(values['-B1-'], 16)) + " " + str(int(values['-R2-'], 16)) + " " + str(int(values['-G2-'], 16)) + " " + str(int(values['-B2-'], 16)) + " " + var8 + "\n"
-			sg.popup('Changes applied successfully.')
+			sg.popup('Changes applied successfully.', location = locale)
 			#print(content) # debug purposes only
-		elif event == 'Remove' and values['-selection-']:
+		elif event == 'Remove' and values['-selection-']: # remove the current piece, gotta confirm first
 			deletedName = choices[selectIndex]
-			elephant = sg.popup_yes_no('Removing ' + deletedName + ' from the wheel. Are you sure?', title='Warning: Confirmation Required!')
+			elephant = sg.popup_yes_no('Removing ' + deletedName + ' from the wheel. Are you sure?', title='Warning: Confirmation Required!', location = locale)
 			if elephant == 'Yes':
 				content.pop(selectIndex)
 				choices.pop(selectIndex)
-				if content != []:
+				if content != []: #if there's more on the wheel...
 					values['-selection-'] = values['-selection-'][0]
 					selectIndex = 0
 					window.FindElement('-selection-').update(set_to_index = selectIndex, values=choices)
@@ -104,18 +112,18 @@ def main():
 					window['-WEIGHT-'].update(var1)
 					window['-R1-'].update(var2), window['-G1-'].update(var3), window['-B1-'].update(var4)
 					window['-R2-'].update(var5), window['-G2-'].update(var6), window['-B2-'].update(var7)
-				else:
+				else: #nothing else is left
 					values['-selection-'] = ['']
 					selectIndex = 0
 					window['-selection-'].update('', set_to_index = -1, values=choices)
 					window['-WEIGHT-'].update('')
 					window['-R1-'].update(''), window['-G1-'].update(''), window['-B1-'].update('')
 					window['-R2-'].update(''), window['-G2-'].update(''), window['-B2-'].update('')
-				sg.popup(deletedName + ' removed from the wheel successfully.')
+				sg.popup(deletedName + ' removed from the wheel successfully.', location = locale)
 			else:
 				continue
 			#print(content) # debug purposes only
-		elif event == 'All Weight+1' and len(choices) > 0:
+		elif event == 'All Weight+1' and len(choices) > 0: # add +1 to all pieces weight
 			for i in range(len(content)):
 				weightList = content[i].split()
 				weightMod = int(weightList[0], 10) + 1
@@ -125,9 +133,9 @@ def main():
 				selectList = content[selectIndex].split()
 				var1 = int(selectList[0])
 				window['-WEIGHT-'].update(var1)
-			sg.popup('All weights increased by +1 successfully.')
+			sg.popup('All weights increased by +1 successfully.', location = locale)
 			#print(content) # debug purposes only
-		elif event == 'Show List':
+		elif event == 'Show List': # Generate a list of everything on the wheel
 			sg.PrintClose()
 			sg.Print('Number  Weight  Name')
 			for i, j in enumerate(content):
@@ -135,11 +143,11 @@ def main():
 				showWeight = showList[0]
 				showName = showList[7]
 				sg.Print(' ' + str(int(i+1)).zfill(3) + '      ' + str(showWeight).zfill(2) + '    ' + showName)
-		elif event == 'Save':
+		elif event == 'Save': # write to file
 			file = open('wheeldata.txt','w')
 			file.writelines(content)
 			file.close()
-			sg.popup('Your data has been saved.')
+			sg.popup('Your data has been saved.', location = locale)
 		elif event == '-NAMEIN-' and values['-NAMEIN-'] and values['-NAMEIN-'][-1] not in ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'."):
 			window['-NAMEIN-'].update(values['-NAMEIN-'][:-1])
 		elif event == '-NAMEIN-' and len(values['-NAMEIN-']) > 15:
@@ -224,7 +232,8 @@ def main():
 			valRRGGBB1 = "#"+str(rngR1)+str(rngG1)+str(rngB1)
 			valRRGGBB2 = "#"+str(rngR2)+str(rngG2)+str(rngB2)
 			window['-NAMEIN-'].update(text_color = valRRGGBB2, background_color = valRRGGBB1)
-		elif event == 'Add to Wheel':
+		elif event == 'Add to Wheel' and values['-NAMEIN-']: # put all the stuff into the list as a new wheel piece
+			# Note to self: add a check here to make sure '-NAMEIN-' isn't already on the wheel and disallow/notify user if it is
 			if values['-SUBIN-']:
 				subweight = 5
 			else:
@@ -238,7 +247,7 @@ def main():
 			content.append(addnew_user)
 			choices.append(values['-NAMEIN-'])
 			#print(content) # for debug purposes only
-			sg.popup(values['-NAMEIN-'] + ' added to the wheel successfully.')
+			sg.popup(values['-NAMEIN-'] + ' added to the wheel successfully.', location = locale)
 			if window == window2:
 				window.close()
 				window2 = None
