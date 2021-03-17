@@ -1,4 +1,4 @@
-# coystrWheel Companion v1.0.7
+# coystrWheel Companion v1.0.8
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
 
@@ -19,6 +19,10 @@
 # v.1.0.7: Added a feature -- the program will now remember the RGB values of a person previously added to the wheel. The values
 #			update when adding a user to the wheel (and selecting "no" to if you want to import the old colors) and when using
 #			"Apply". If userbase.txt doesn't exist, it will generate that file for you automatically.
+# v.1.0.8: Major Bugfix: Corrected an issue where trying to manually input a name in the main window dropdown box that does not exist
+#			would generate a program-crashing error. Added a preventative measure to disallow the "Apply" button if a name was
+#			manually input that does not exist. If a name is manually input into the user selection dropdown box that DOES exist,
+#			but the user hits Apply, the function is ignored and the user's data is populated instead.
 
 import PySimpleGUI as sg
 import random
@@ -101,12 +105,12 @@ def main():
 		elif event == 'Help...':
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!', location = locale)
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0.3', 'coystrWheel Companion Version 1.0.7', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
+			sg.popup('coystrWheel Version 1.0.3', 'coystrWheel Companion Version 1.0.8', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari', location = locale)
 		elif event == 'Add New...':
 			if not window2:
 				window2 = addnew_win()
-		elif event == 'Apply' and values['-selection-']: # edit the current piece
+		elif event == 'Apply' and values['-selection-'] and (values['-selection-'] in choices) and values['-WEIGHT-'] and values['-R1-'] and values['-G1-'] and values['-B1-'] and values['-R2-'] and values['-G2-'] and values['-B2-']: # edit the current piece
 			content[selectIndex] = str(int(values['-WEIGHT-'], 10)) + " " + str(int(values['-R1-'], 16)) + " " + str(int(values['-G1-'], 16)) + " " + str(int(values['-B1-'], 16)) + " " + str(int(values['-R2-'], 16)) + " " + str(int(values['-G2-'], 16)) + " " + str(int(values['-B2-'], 16)) + " " + var8 + "\n"
 			if var8 in userMem:
 				i = 0
@@ -390,9 +394,12 @@ def main():
 						var1, var2, var3, var4, var5, var6, var7 = [hex(int(selectList[k])).lstrip("0x").zfill(2) for k in range(7)]
 						var1 = int(var1, 16)
 						var8 = selectList[7]
-				window['-WEIGHT-'].update(var1)
-				window['-R1-'].update(var2), window['-G1-'].update(var3), window['-B1-'].update(var4)
-				window['-R2-'].update(var5), window['-G2-'].update(var6), window['-B2-'].update(var7)
+				try:
+					window['-WEIGHT-'].update(var1)
+					window['-R1-'].update(var2), window['-G1-'].update(var3), window['-B1-'].update(var4)
+					window['-R2-'].update(var5), window['-G2-'].update(var6), window['-B2-'].update(var7)
+				except UnboundLocalError:
+					continue
 		except KeyError:
 			continue
 
