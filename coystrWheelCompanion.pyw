@@ -1,4 +1,4 @@
-# coystrWheel Companion v1.0.5
+# coystrWheel Companion v1.0.6
 # Created by DuplicitousFox for Coy_Stream@twitch.tv
 # (c)2020, 2021 Foxtail Studios
 
@@ -14,6 +14,8 @@
 #			Enabled "." and "'" as valid entries in the "Add New..." menu's Name input box.
 # v.1.0.5: Changed where popup windows spawn. It is now based on where the main window is currently located.
 #			Bugfix: Corrected an issue where it was possible to add a piece to the wheel without a name, which crashed the program.
+# v.1.0.6: Added a feature that checks if someone's already on the list when using "Add to Wheel", prevents the addition, and
+#			brings the user to that person's name in the list.
 
 import PySimpleGUI as sg
 import random
@@ -84,9 +86,8 @@ def main():
 				break
 		elif event == 'Help...':
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!', location = locale)
-			sg.popup('WARNING: Known Bugs', 'Do not enter a duplicate name as it will confuse the program when it tries to parse the list.', location = locale)
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0.1', 'coystrWheel Companion Version 1.0.5', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
+			sg.popup('coystrWheel Version 1.0.3', 'coystrWheel Companion Version 1.0.6', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari', location = locale)
 		elif event == 'Add New...':
 			if not window2:
@@ -233,7 +234,28 @@ def main():
 			valRRGGBB2 = "#"+str(rngR2)+str(rngG2)+str(rngB2)
 			window['-NAMEIN-'].update(text_color = valRRGGBB2, background_color = valRRGGBB1)
 		elif event == 'Add to Wheel' and values['-NAMEIN-']: # put all the stuff into the list as a new wheel piece
-			# Note to self: add a check here to make sure '-NAMEIN-' isn't already on the wheel and disallow/notify user if it is
+			if values['-NAMEIN-'] in choices: # if someone's already on the list, notify the user
+				sg.popup('Error: ' + values['-NAMEIN-'] + ' is already on the wheel.')
+				i = 0
+				while i < len(choices):
+					if values['-NAMEIN-'] == choices[i]:
+						selectIndex = i
+					i += 1
+				if window == window2: # close the window and set the list to the name specified
+					window.close()
+					window2 = None
+				output_window = window1
+				if output_window:
+					output_window['-selection-'].update(set_to_index = selectIndex, values=choices)
+					selectList = content[selectIndex].split()
+					var1, var2, var3, var4, var5, var6, var7 = [hex(int(selectList[k])).lstrip("0x").zfill(2) for k in range(7)]
+					var1 = int(var1, 16)
+					var8 = selectList[7]
+					output_window['-WEIGHT-'].update(var1)
+					output_window['-R1-'].update(var2), output_window['-G1-'].update(var3), output_window['-B1-'].update(var4)
+					output_window['-R2-'].update(var5), output_window['-G2-'].update(var6), output_window['-B2-'].update(var7)
+					output_window = None
+				continue
 			if values['-SUBIN-']:
 				subweight = 5
 			else:
