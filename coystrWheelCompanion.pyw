@@ -23,6 +23,7 @@
 #			would generate a program-crashing error. Added a preventative measure to disallow the "Apply" button if a name was
 #			manually input that does not exist. If a name is manually input into the user selection dropdown box that DOES exist,
 #			but the user hits Apply, the function is ignored and the user's data is populated instead.
+# v.1.0.9: Code Optimization
 
 import PySimpleGUI as sg
 import random
@@ -61,6 +62,30 @@ for i in range(userLength):
 
 # GUI Declarations
 
+def newline(library):
+	if len(library) > 0:
+		prevline = library[len(library)-1]
+		lastchar = prevline[-1]
+	if lastchar != "\n":
+		library[len(library)-1] = library[len(library)-1] + "\n"
+
+def rngColor(index, window): # hexidecimal color randomizer
+	RR, GG, BB = '-R' + str(index) + 'IN-', '-G' + str(index) + 'IN-', '-B' + str(index) + 'IN-'
+	colVarR = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+	colVarG = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+	colVarB = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
+	valRRGGBB = "#"+str(colVarR)+str(colVarG)+str(colVarB)
+	window[RR].update(colVarR), window[GG].update(colVarG), window[BB].update(colVarB)
+	if index == 1:
+		window['-NAMEIN-'].update(background_color = valRRGGBB)
+	else:
+		window['-NAMEIN-'].update(text_color = valRRGGBB)
+
+def save_file(fname, fdata):
+	file = open(fname,'w')
+	file.writelines(fdata)
+	file.close()
+	
 def main_win():
 	menu_def = [['Help', ['Help...', 'About...']], ]
 	title = "coystrWheel Companion"
@@ -93,7 +118,7 @@ def main():
 		locale[0] = locale[0] + (window1.Size[0] / 4) # Edit x window coordinate
 		locale[1] = locale[1] + (window1.Size[1] / 2) # Edit y window coordinate
 		sg.SetOptions(window_location = locale) # All future windows will spawn here.
-		
+
 		if window == sg.WIN_CLOSED:  #if all windows were closed
 			break
 		if event == sg.WIN_CLOSED or event == 'Cancel' or event == 'Close':
@@ -105,7 +130,7 @@ def main():
 		elif event == 'Help...':
 			sg.popup('How to use coystrWheel Companion', 'Select a name from the dropdown to load and edit an existing piece. When finished editing a single piece, press the Apply button.', 'The Add New... button will pop up a new window for you to enter data and add it to the wheel. Maximum name length is 15 characters. RGB values are in Hexidecimal.', 'The Remove button will remove the currently selected piece from the wheel.', 'The All Weight+1 button adds 1 to all of the pieces weights.', 'When you are finished, click Save. Your changes will ONLY commit to file when you click Save, so do not forget to do this!', location = locale)
 		elif event == 'About...':
-			sg.popup('coystrWheel Version 1.0.3', 'coystrWheel Companion Version 1.0.8', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
+			sg.popup('coystrWheel Version 1.1.1', 'coystrWheel Companion Version 1.0.9', "For my good friend, Coy. Hope all your seeds aren't trash!", location = locale)
 			sg.popup('Seriously, though...', 'If something breaks, hit me up on Discord.', '--Hidari', location = locale)
 		elif event == 'Add New...':
 			if not window2:
@@ -120,21 +145,13 @@ def main():
 					i += 1
 				newUserLine = (str(int(values['-R1-'], 16)) + ' ' + str(int(values['-G1-'], 16)) + ' ' + str(int(values['-B1-'], 16)) + ' ' + str(int(values['-R2-'], 16)) + ' ' + str(int(values['-G2-'], 16)) + ' ' + str(int(values['-B2-'], 16)) + ' ' + var8)
 				userbase[userIndex] = newUserLine + "\n"
-				file = open('userbase.txt','w')
-				file.writelines(userbase)
-				file.close()
+				save_file('userbase.txt', userbase)
 			else:
-				if len(userbase) > 0:
-					prevline = userbase[len(userbase)-1]
-					lastchar = prevline[-1]
-					if lastchar != "\n":
-						userbase[len(userbase)-1] = userbase[len(userbase)-1] + "\n"
+				newline(userbase)
 				newUserLine = (str(int(values['-R1-'], 16)) + ' ' + str(int(values['-G1-'], 16)) + ' ' + str(int(values['-B1-'], 16)) + ' ' + str(int(values['-R2-'], 16)) + ' ' + str(int(values['-G2-'], 16)) + ' ' + str(int(values['-B2-'], 16)) + ' ' + var8)
 				userbase.append(newUserLine)
 				userMem.append(var8)
-				file = open('userbase.txt','w')
-				file.writelines(userbase)
-				file.close()
+				save_file('userbase.txt', userbase)
 			sg.popup('Changes applied successfully.', location = locale)
 			#print(content) # debug purposes only
 		elif event == 'Remove' and values['-selection-']: # remove the current piece, gotta confirm first
@@ -146,7 +163,7 @@ def main():
 				if content != []: #if there's more on the wheel...
 					values['-selection-'] = values['-selection-'][0]
 					selectIndex = 0
-					window.FindElement('-selection-').update(set_to_index = selectIndex, values=choices)
+					window['-selection-'].update(set_to_index = selectIndex, values=choices)
 					selectList = content[selectIndex].split()
 					var1, var2, var3, var4, var5, var6, var7 = [hex(int(selectList[k])).lstrip("0x").zfill(2) for k in range(7)]
 					var1 = int(var1, 16)
@@ -186,9 +203,7 @@ def main():
 				showName = showList[7]
 				sg.Print(' ' + str(int(i+1)).zfill(3) + '      ' + str(showWeight).zfill(2) + '    ' + showName)
 		elif event == 'Save': # write to file
-			file = open('wheeldata.txt','w')
-			file.writelines(content)
-			file.close()
+			save_file('wheeldata.txt', content)
 			sg.popup('Your data has been saved.', location = locale)
 		elif event == '-NAMEIN-' and values['-NAMEIN-'] and values['-NAMEIN-'][-1] not in ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-'."):
 			window['-NAMEIN-'].update(values['-NAMEIN-'][:-1])
@@ -249,31 +264,12 @@ def main():
 			valRRGGBB2 = "#" + (values['-R2IN-']).zfill(2) + (values['-G2IN-']).zfill(2) + (values['-B2IN-']).zfill(2)
 			window['-NAMEIN-'].update(text_color = valRRGGBB2, background_color = valRRGGBB1)
 		elif event == 'Randomize BG Color':
-			rngR1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngG1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngB1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			window['-R1IN-'].update(rngR1), window['-G1IN-'].update(rngG1), window['-B1IN-'].update(rngB1)
-			valRRGGBB1 = "#"+str(rngR1)+str(rngG1)+str(rngB1)
-			window['-NAMEIN-'].update(background_color = valRRGGBB1)
+			rngColor(1, window)			
 		elif event == 'Randomize Text Color':
-			rngR2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngG2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngB2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			window['-R2IN-'].update(rngR2), window['-G2IN-'].update(rngG2), window['-B2IN-'].update(rngB2)
-			valRRGGBB2 = "#"+str(rngR2)+str(rngG2)+str(rngB2)
-			window['-NAMEIN-'].update(text_color = valRRGGBB2)
+			rngColor(2, window)
 		elif event == 'Randomize Both Colors':
-			rngR1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngG1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngB1 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngR2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngG2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			rngB2 = hex(int(random.randrange(0, 255, 1))).lstrip("0x").zfill(2)
-			window['-R1IN-'].update(rngR1), window['-G1IN-'].update(rngG1), window['-B1IN-'].update(rngB1)
-			window['-R2IN-'].update(rngR2), window['-G2IN-'].update(rngG2), window['-B2IN-'].update(rngB2)
-			valRRGGBB1 = "#"+str(rngR1)+str(rngG1)+str(rngB1)
-			valRRGGBB2 = "#"+str(rngR2)+str(rngG2)+str(rngB2)
-			window['-NAMEIN-'].update(text_color = valRRGGBB2, background_color = valRRGGBB1)
+			rngColor(1, window)
+			rngColor(2, window)
 		elif event == 'Add to Wheel' and values['-NAMEIN-']: # put all the stuff into the list as a new wheel piece
 			if values['-NAMEIN-'] in choices: # if someone's already on the list, notify the user
 				sg.popup('Error: ' + values['-NAMEIN-'] + ' is already on the wheel.')
@@ -315,11 +311,7 @@ def main():
 				if redux == 'Yes': # If desired, update the entries and leave the userbase.txt alone
 					window['-R1IN-'].update(rr1), window['-G1IN-'].update(gg1), window['-B1IN-'].update(bb1)
 					window['-R2IN-'].update(rr1), window['-G2IN-'].update(gg1), window['-B2IN-'].update(bb2)
-					if len(content) > 0:
-						prevline = content[len(content)-1]
-						lastchar = prevline[-1]
-					if lastchar != "\n":
-						content[len(content)-1] = content[len(content)-1] + "\n"
+					newline(content)
 					addnew_user = (str(subweight) + ' ' + str(int(rr1, 16)) + ' ' + str(int(gg1, 16)) + ' ' + str(int(bb1, 16)) + ' ' + str(int(rr2, 16)) + ' ' + str(int(gg2, 16)) + ' ' + str(int(bb2, 16)) + ' ' + values['-NAMEIN-'])
 					content.append(addnew_user)
 					choices.append(values['-NAMEIN-'])
@@ -344,26 +336,14 @@ def main():
 				else: # Otherwise, leave the entries alone and update userbase.txt
 					newUserLine = (str(int(values['-R1IN-'], 16)) + ' ' + str(int(values['-G1IN-'], 16)) + ' ' + str(int(values['-B1IN-'], 16)) + ' ' + str(int(values['-R2IN-'], 16)) + ' ' + str(int(values['-G2IN-'], 16)) + ' ' + str(int(values['-B2IN-'], 16)) + ' ' + values['-NAMEIN-'])
 					userbase[selectIndex] = newUserLine + "\n"
-					file = open('userbase.txt','w')
-					file.writelines(userbase)
-					file.close()
+					save_file('userbase.txt', userbase)
 			else:
-				if len(userbase) > 0:
-					prevline = userbase[len(userbase)-1]
-					lastchar = prevline[-1]
-					if lastchar != "\n":
-						userbase[len(userbase)-1] = userbase[len(userbase)-1] + "\n"
+				newline(userbase)
 				newUserLine = (str(int(values['-R1IN-'], 16)) + ' ' + str(int(values['-G1IN-'], 16)) + ' ' + str(int(values['-B1IN-'], 16)) + ' ' + str(int(values['-R2IN-'], 16)) + ' ' + str(int(values['-G2IN-'], 16)) + ' ' + str(int(values['-B2IN-'], 16)) + ' ' + values['-NAMEIN-'])
 				userbase.append(newUserLine)
 				userMem.append(values['-NAMEIN-'])
-				file = open('userbase.txt','w')
-				file.writelines(userbase)
-				file.close()
-			if len(content) > 0:
-				prevline = content[len(content)-1]
-				lastchar = prevline[-1]
-				if lastchar != "\n":
-					content[len(content)-1] = content[len(content)-1] + "\n"
+				save_file('userbase.txt', userbase)
+			newline(content)
 			addnew_user = (str(subweight) + ' ' + str(int(values['-R1IN-'], 16)) + ' ' + str(int(values['-G1IN-'], 16)) + ' ' + str(int(values['-B1IN-'], 16)) + ' ' + str(int(values['-R2IN-'], 16)) + ' ' + str(int(values['-G2IN-'], 16)) + ' ' + str(int(values['-B2IN-'], 16)) + ' ' + values['-NAMEIN-'])
 			content.append(addnew_user)
 			choices.append(values['-NAMEIN-'])
